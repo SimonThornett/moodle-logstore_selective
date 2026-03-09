@@ -89,7 +89,7 @@ export const init = () => {
             args: {settings: JSON.stringify(changedSettings)}
         }]);
         request[0].done(async function() {
-            window.location.reload();
+            window.location.href = window.location.href.split('#')[0];
         }).fail(Notification.exception);
     });
 };

@@ -28,4 +28,4 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->version = 2026030900;
 $plugin->requires = 2024042205;
 $plugin->component = 'logstore_selective';
-$plugin->release = '1.1';
+$plugin->release = '1.2';

@@ -25,6 +25,7 @@
 
 namespace logstore_selective\external;
 
+use core\notification;
 use core_external\external_api;
 use core_external\external_function_parameters;
 use core_external\external_multiple_structure;
@@ -57,6 +58,7 @@ class save_settings extends external_api {
         foreach ($settings as $settingname => $settingvalue) {
             set_config($settingname, $settingvalue, 'logstore_selective');
         }
+        notification::add(get_string('setting:updated', 'logstore_selective'), notification::SUCCESS);
     }
 
     /**

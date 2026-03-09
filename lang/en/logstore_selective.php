@@ -57,4 +57,5 @@ $string['setting:logguests'] = 'Log guest access';
 $string['setting:logguests_help'] = 'This setting enables logging of actions by guest account and not logged in users. High profile sites may want to disable this logging for performance reasons. It is recommended to keep this setting enabled on production sites.';
 $string['setting:loglifetime'] = 'General period to keep logs for';
 $string['setting:loglifetime_help'] = '';
+$string['setting:updated'] = 'Settings have been updated.';
 $string['taskcleanup'] = 'Log table cleanup';
