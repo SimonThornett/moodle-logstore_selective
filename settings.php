@@ -29,12 +29,27 @@ use tool_monitor\eventlist;
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
+    $eventurl = new moodle_url('/admin/tool/log/store/selective/index.php');
+
+    $ADMIN->add(
+        'logging',
+        new admin_externalpage(
+            'logstore_selective/events',
+            get_string('setting:events', 'logstore_selective'),
+            $eventurl,
+            'moodle/site:config',
+            true,
+        ),
+    );
+
+    // General settings.
+    $settings->add(new admin_setting_heading('general', get_string('setting:general', 'logstore_selective'), ''));
 
     $settings->add(
         new admin_setting_configcheckbox(
             'logstore_selective/jsonformat',
-            new lang_string('jsonformat', 'logstore_selective'),
-            new lang_string('jsonformat_desc', 'logstore_selective'),
+            new lang_string('setting:jsonformat', 'logstore_selective'),
+            new lang_string('setting:jsonformat_desc', 'logstore_selective'),
             1
         )
     );
@@ -42,50 +57,27 @@ if ($hassiteconfig) {
     $settings->add(
         new admin_setting_configtext(
             'logstore_selective/buffersize',
-            get_string('buffersize', 'logstore_selective'),
-            '',
+            get_string('setting:buffersize', 'logstore_selective'),
+            get_string('setting:buffersize_desc', 'logstore_selective'),
             '50',
             PARAM_INT
         )
     );
 
+    // Event settings.
     $settings->add(
         new admin_setting_heading(
-            'select_heading',
-            'Select the events you would like to log below',
-            'Select whether or not to log this event, and if so, how long it will remain in the database for.'
-        )
+            'events',
+            get_string('setting:events', 'logstore_selective'),
+            get_string(
+                'setting:events_desc',
+                'logstore_selective',
+                html_writer::link(
+                    $eventurl,
+                    get_string('setting:events_link', 'logstore_selective'),
+                    ['target' => '_blank'],
+                ),
+            ),
+        ),
     );
-
-    $options = [
-        2    => new lang_string('numdays', '', 2),
-        5    => new lang_string('numdays', '', 5),
-        10   => new lang_string('numdays', '', 10),
-        35   => new lang_string('numdays', '', 35),
-        60   => new lang_string('numdays', '', 60),
-        90   => new lang_string('numdays', '', 90),
-        120  => new lang_string('numdays', '', 120),
-        150  => new lang_string('numdays', '', 150),
-        180  => new lang_string('numdays', '', 180),
-        365  => new lang_string('numdays', '', 365),
-        1000 => new lang_string('numdays', '', 1000),
-        0    => new lang_string('neverdeletelogs'),
-    ];
-
-    $eventgroups = eventlist::get_all_eventlist();
-    foreach ($eventgroups as $eventgroup => $events) {
-        $heading = str_replace('_', ' ', $eventgroup);
-        $settings->add(new admin_setting_heading($eventgroup, "Component: $heading", ''));
-        foreach ($events as $eventname => $displayname) {
-            $setting = new admin_setting_configselect(
-                'logstore_selective/' . store::get_processed_eventname($eventname),
-                $displayname,
-                '',
-                0,
-                $options
-            );
-            $setting->set_enabled_flag_options(admin_setting_flag::ENABLED, false);
-            $settings->add($setting);
-        }
-    }
 }

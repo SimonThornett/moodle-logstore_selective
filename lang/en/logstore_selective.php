@@ -23,13 +23,16 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['buffersize'] = 'Write buffer size';
-$string['jsonformat'] = 'JSON format';
-$string['jsonformat_desc'] = 'Use standard JSON format instead of PHP serialised data in the \'other\' database field.';
-$string['logguests'] = 'Log guest access';
-$string['logguests_help'] = 'This setting enables logging of actions by guest account and not logged in users. High profile sites may want to disable this logging for performance reasons. It is recommended to keep this setting enabled on production sites.';
-$string['loglifetime'] = 'General period to keep logs for';
-$string['loglifetime_help'] = '';
+$string['events:col:fulleventname'] = 'Event name';
+$string['events:col:component'] = 'Component';
+$string['events:col:edulevel'] = 'Education level';
+$string['events:col:crud'] = 'Database query type';
+$string['events:col:objecttable'] = 'Affected table';
+$string['events:col:enable'] = 'Enable';
+$string['events:col:duration'] = 'Log duration';
+$string['events:description'] = 'On this page you can individually select which events you would like to be logged and how long those records should be kept for.<br/>
+New events added as part of upgrades or plugin installations will appear here automatically, but will not be enabled by default.<br/>';
+$string['events:heading'] = 'Event storage configuration';
 $string['pluginname'] = 'Selective log';
 $string['pluginname_desc'] = 'A log plugin stores log entries in a Moodle database table.';
 $string['privacy:metadata:log'] = 'A collection of past events';
@@ -42,4 +45,16 @@ $string['privacy:metadata:log:realuserid'] = 'The ID of the real user behind the
 $string['privacy:metadata:log:relateduserid'] = 'The ID of a user related to this event';
 $string['privacy:metadata:log:timecreated'] = 'The time when the event occurred';
 $string['privacy:metadata:log:userid'] = 'The ID of the user who triggered this event';
+$string['setting:buffersize'] = 'Write buffer size';
+$string['setting:buffersize_desc'] = '';
+$string['setting:events'] = 'Event settings';
+$string['setting:events_desc'] = 'Individual event settings can be configured here: {$a}';
+$string['setting:events_link'] = 'Events Configuration';
+$string['setting:general'] = 'General settings';
+$string['setting:jsonformat'] = 'JSON format';
+$string['setting:jsonformat_desc'] = 'Use standard JSON format instead of PHP serialised data in the \'other\' database field.';
+$string['setting:logguests'] = 'Log guest access';
+$string['setting:logguests_help'] = 'This setting enables logging of actions by guest account and not logged in users. High profile sites may want to disable this logging for performance reasons. It is recommended to keep this setting enabled on production sites.';
+$string['setting:loglifetime'] = 'General period to keep logs for';
+$string['setting:loglifetime_help'] = '';
 $string['taskcleanup'] = 'Log table cleanup';

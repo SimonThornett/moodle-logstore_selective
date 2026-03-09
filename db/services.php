@@ -15,17 +15,22 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version file.
+ * External services.
  *
  * @package   logstore_selective
  * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
- * @copyright Catalyst IT, 2025
+ * @copyright Catalyst IT, 2026
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026030900;
-$plugin->requires = 2024042205;
-$plugin->component = 'logstore_selective';
-$plugin->release = '1.1';
+$functions = [
+    'logstore_selective_save_settings' => [
+        'classname' => logstore_selective\external\save_settings::class,
+        'description' => 'Save admin settings',
+        'type' => 'write',
+        'ajax' => true,
+        'capabilities' => 'moodle/site:config'
+    ],
+];

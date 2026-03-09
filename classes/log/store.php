@@ -223,9 +223,9 @@ class store implements writer, sql_internal_table_reader {
      */
     protected function get_config($name, $default = null): mixed {
         $enabled = get_config($this->component, $name . '_enabled');
-        $value = get_config($this->component, $name);
-        if ($value !== false && $enabled) {
-            return $value;
+        $duration = get_config($this->component, $name . '_duration');
+        if ($duration !== false && $enabled) {
+            return $duration;
         }
         return $default;
     }

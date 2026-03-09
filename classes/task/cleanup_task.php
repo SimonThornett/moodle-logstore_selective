@@ -25,9 +25,11 @@
 
 namespace logstore_selective\task;
 
+use core\task\scheduled_task;
+
 defined('MOODLE_INTERNAL') || die();
 
-class cleanup_task extends \core\task\scheduled_task {
+class cleanup_task extends scheduled_task {
 
     /**
      * Get a descriptive name for this task (shown to admins).
@@ -45,38 +47,58 @@ class cleanup_task extends \core\task\scheduled_task {
     public function execute(): void {
         global $DB;
 
-        $settings = get_config('logstore_selective');
-
-        // We need to unset some of the generic config.
-        unset($settings->version);
-        unset($settings->logguests);
-        unset($settings->jsonformat);
-        unset($settings->buffersize);
+        // Get all enabled config.
+        $config = $this->get_config();
 
         // Next iterate over each config item and remove matching events older than the defined period.
-        foreach ((array) $settings as $eventname => $loglifetime) {
-            // If 0 then "Never delete logs" selected so move on.
-            if (empty($loglifetime)) {
-                continue;
-            }
+        foreach ($config as $eventname => $duration) {
 
-            // Check if the event is enabled.
-            if (isset($settings->{$eventname . '_enabled'}) && $settings->{$eventname . '_enabled'}) {
-                $loglifetime = time() - ($loglifetime * 3600 * 24); // Value in days.
-                $selectparams = [$loglifetime, $eventname];
-                $start = time();
+            // Convert duration to days.
+            $duration = time() - ($duration * DAYSECS);
+            $selectparams = [$duration, $eventname];
+            $start = time();
 
-                while ($min = $DB->get_field_select('logstore_selective_log', "MIN(timecreated)", "timecreated < ? AND configname = ?", $selectparams)) {
-                    $params = [min($min + (3600 * 24), $loglifetime), $eventname];
-                    $DB->delete_records_select('logstore_selective_log', "timecreated < ? AND configname = ?", $params);
-                    if (time() > $start + 600) {
-                        // Do not churn on log deletion for too long each run.
-                        break;
-                    }
+            while ($min = $DB->get_field_select('logstore_selective_log', "MIN(timecreated)", "timecreated < ? AND configname = ?", $selectparams)) {
+                // Delete a days worth at a time.
+                $params = [min($min + DAYSECS, $duration), $eventname];
+                $DB->delete_records_select('logstore_selective_log', "timecreated < ? AND configname = ?", $params);
+                if (time() > $start + 600) {
+                    // Do not churn on log deletion for too long each run.
+                    break;
                 }
             }
         }
 
         mtrace(" Deleted old log records from selective store.");
+    }
+
+    /**
+     * Get the enabled config for the events.
+     *
+     * @return array
+     */
+    private function get_config(): array {
+        $config = get_config('logstore_selective');
+        $enabled = [];
+
+        foreach ($config as $name => $value) {
+            // We're only looking at enabled flag config.
+            if (!str_contains($name, '_enabled')) {
+                continue;
+            }
+            // Skip disabled events.
+            if (!$value) {
+                continue;
+            }
+
+            $eventname = str_replace('_enabled', '', $name);
+            $duration = get_config('logstore_selective', $eventname . '_duration');
+
+            // If 0 then "Never delete logs" selected so don't include.
+            if ($duration) {
+                $enabled[$eventname] = $duration;
+            }
+        }
+        return $enabled;
     }
 }

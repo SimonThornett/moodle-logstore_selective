@@ -15,18 +15,39 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO Add description
+ * Event configuration.
  *
- * @package   TODO Add package name
+ * @package   logstore_selective
  * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
  * @copyright Catalyst IT, 2025
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once('../../../../../config.php');
-$PAGE->set_context(context_system::instance());
-$PAGE->set_url(new moodle_url('/admin/tool/log/store/index.php'));
+use logstore_selective\table\events;
+
+require_once( dirname(__FILE__, 6) . '/config.php');
+require_once($CFG->dirroot . '/lib/adminlib.php');
+
+navigation_node::override_active_url(new moodle_url('/admin/settings.php', ['section' => 'logsettingselective']));
+admin_externalpage_setup('logstore_selective/events');
+
+$PAGE->requires->css('/admin/tool/log/store/selective/styles.css');
+$PAGE->requires->js_call_amd('logstore_selective/settings', 'init');
+
 echo $OUTPUT->header();
-var_dump(get_config('logstore_selective', 'assignsubmission_comments_event_comment_created_enabled'));
-var_dump(get_config('logstore_selective', 'assignsubmission_file_event_submission_created_enabled'));
+
+// Get the events table.
+$table = new events();
+ob_start();
+$table->out();
+$eventtable = ob_get_clean();
+
+// Render the template.
+echo $OUTPUT->render_from_template(
+    'logstore_selective/events',
+    [
+        'table' => $eventtable,
+    ],
+);
+
 echo $OUTPUT->footer();
