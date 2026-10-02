@@ -22,11 +22,7 @@
  * @copyright Catalyst IT, 2025
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
 class restore_logstore_selective_subplugin extends restore_tool_log_logstore_subplugin {
-
     /**
      * Returns the subplugin structure to attach to the 'logstore' XML element.
      *

@@ -31,6 +31,6 @@ $functions = [
         'description' => 'Save admin settings',
         'type' => 'write',
         'ajax' => true,
-        'capabilities' => 'moodle/site:config'
+        'capabilities' => 'moodle/site:config',
     ],
 ];

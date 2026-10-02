@@ -17,30 +17,199 @@
 {{!
     @template logstore_selective/events
 
-    Template for the events settings page.
+    Event storage configuration page with filtering and bulk actions.
+
+    Context variables required for this template:
+    * events - List of events with configname, eventname, name, component, componentname, edulevel,
+      edulevelname, crud, crudname, objecttable, enabled, duration, durations and searchtext.
+    * total - Total number of events.
+    * enabledcount - Number of enabled events.
+    * components - Component filter options.
+    * edulevels - Education level filter options.
+    * cruds - CRUD filter options.
+    * durations - Retention options for bulk actions.
 
     Example context (json):
     {
-
+        "events": [
+            {
+                "configname": "core_event_user_loggedin",
+                "eventname": "\\core\\event\\user_loggedin",
+                "name": "User has logged in",
+                "component": "core",
+                "componentname": "core",
+                "edulevel": 0,
+                "edulevelname": "Other",
+                "crud": "r",
+                "crudname": "View",
+                "objecttable": "user",
+                "enabled": true,
+                "duration": 35,
+                "durations": [
+                    {"value": 35, "label": "35 days", "selected": true},
+                    {"value": 0, "label": "Never delete logs", "selected": false}
+                ],
+                "searchtext": "user has logged in \\core\\event\\user_loggedin core user"
+            }
+        ],
+        "total": 1,
+        "enabledcount": 1,
+        "components": [{"value": "core", "label": "core"}],
+        "edulevels": [{"value": 0, "label": "Other"}],
+        "cruds": [{"value": "r", "label": "View"}],
+        "durations": [{"value": 35, "label": "35 days"}, {"value": 0, "label": "Never delete logs"}]
     }
 }}
-<div class="logstore-selective container-fluid">
-  <div class="logstore-selective header row ">
-    <h2>{{#str}}events:heading, logstore_selective{{/str}}</h2>
-    <p>
-      {{#str}}events:description, logstore_selective{{/str}}
-    </p>
-  </div>
-  <div class="logstore-selective table row">
-    {{{table}}}
-  </div>
-  <div class="logstore-selective footer-bar row">
-    <span class="changes p-5 offset-3 col-3 text-end align-middle">
-      Changes:
-      <span id="logstore-selective-setting-changes" data-value="0">0</span>
-    </span>
-    <span class="submit-button p-4 col-3 text-start align-middle">
-      <button class="btn btn-primary" id="logstore-selective-submit">Save settings</button>
-    </span>
-  </div>
+<div class="logstore-selective" id="logstore-selective-events" data-region="logstore-selective-events">
+    <p class="text-muted">{{#str}}events:description, logstore_selective{{/str}}</p>
+
+    <form class="logstore-selective-filters card card-body bg-light mb-3" data-region="filters" role="search"
+        aria-label="{{#str}}events:filters, logstore_selective{{/str}}">
+        <div class="row align-items-end">
+            <div class="form-group col-lg-4 col-md-6">
+                <label for="logstore-selective-filter-search">{{#str}}events:search, logstore_selective{{/str}}</label>
+                <input type="search" class="form-control" id="logstore-selective-filter-search"
+                    data-filter="search" placeholder="{{#str}}events:searchplaceholder, logstore_selective{{/str}}">
+            </div>
+            <div class="form-group col-lg-2 col-md-6">
+                <label for="logstore-selective-filter-component">{{#str}}events:col:component, logstore_selective{{/str}}</label>
+                <select class="custom-select" id="logstore-selective-filter-component" data-filter="component">
+                    <option value="">{{#str}}events:filter:allcomponents, logstore_selective{{/str}}</option>
+                    {{#components}}
+                        <option value="{{value}}">{{label}}</option>
+                    {{/components}}
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-4">
+                <label for="logstore-selective-filter-edulevel">{{#str}}events:col:edulevel, logstore_selective{{/str}}</label>
+                <select class="custom-select" id="logstore-selective-filter-edulevel" data-filter="edulevel">
+                    <option value="">{{#str}}all{{/str}}</option>
+                    {{#edulevels}}
+                        <option value="{{value}}">{{label}}</option>
+                    {{/edulevels}}
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-4">
+                <label for="logstore-selective-filter-crud">{{#str}}events:col:crud, logstore_selective{{/str}}</label>
+                <select class="custom-select" id="logstore-selective-filter-crud" data-filter="crud">
+                    <option value="">{{#str}}all{{/str}}</option>
+                    {{#cruds}}
+                        <option value="{{value}}">{{label}}</option>
+                    {{/cruds}}
+                </select>
+            </div>
+            <div class="form-group col-lg-2 col-md-4">
+                <label for="logstore-selective-filter-status">{{#str}}status{{/str}}</label>
+                <select class="custom-select" id="logstore-selective-filter-status" data-filter="status">
+                    <option value="">{{#str}}all{{/str}}</option>
+                    <option value="enabled">{{#str}}events:filter:enabled, logstore_selective{{/str}}</option>
+                    <option value="disabled">{{#str}}events:filter:disabled, logstore_selective{{/str}}</option>
+                </select>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center">
+            <button type="reset" class="btn btn-link px-0" data-action="clear-filters">
+                {{#str}}events:filter:clear, logstore_selective{{/str}}
+            </button>
+        </div>
+    </form>
+
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+        <div class="logstore-selective-gap d-flex flex-wrap align-items-center mb-2" aria-live="polite">
+            <span data-region="showing">{{#str}}events:showing, logstore_selective, { "shown": {{total}}, "total": {{total}} }{{/str}}</span>
+            <span class="badge badge-success" data-region="enabledcount">{{#str}}events:enabledcount, logstore_selective, {{enabledcount}}{{/str}}</span>
+        </div>
+        <div class="logstore-selective-gap d-flex flex-wrap align-items-center mb-2" data-region="bulk-actions">
+            <span>{{#str}}events:bulk:visible, logstore_selective{{/str}}</span>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="bulk-enable">
+                {{#str}}events:bulk:enable, logstore_selective{{/str}}
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="bulk-disable">
+                {{#str}}events:bulk:disable, logstore_selective{{/str}}
+            </button>
+            <label class="sr-only" for="logstore-selective-bulk-duration">{{#str}}events:col:duration, logstore_selective{{/str}}</label>
+            <select class="custom-select custom-select-sm w-auto" id="logstore-selective-bulk-duration" data-region="bulk-duration">
+                {{#durations}}
+                    <option value="{{value}}">{{label}}</option>
+                {{/durations}}
+            </select>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-action="bulk-duration">
+                {{#str}}events:bulk:setduration, logstore_selective{{/str}}
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-sm table-hover generaltable logstore-selective-table" id="logstore-selective-events-table">
+            <thead>
+                <tr>
+                    <th scope="col">{{#str}}events:col:enable, logstore_selective{{/str}}</th>
+                    <th scope="col">{{#str}}events:col:fulleventname, logstore_selective{{/str}}</th>
+                    <th scope="col">{{#str}}events:col:component, logstore_selective{{/str}}</th>
+                    <th scope="col">{{#str}}events:col:edulevel, logstore_selective{{/str}}</th>
+                    <th scope="col">{{#str}}events:col:crud, logstore_selective{{/str}}</th>
+                    <th scope="col">{{#str}}events:col:objecttable, logstore_selective{{/str}}</th>
+                    <th scope="col">{{#str}}events:col:duration, logstore_selective{{/str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#events}}
+                    <tr data-region="event-row"
+                        data-configname="{{configname}}"
+                        data-component="{{component}}"
+                        data-edulevel="{{edulevel}}"
+                        data-crud="{{crud}}"
+                        data-search="{{searchtext}}">
+                        <td>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox"
+                                    class="custom-control-input"
+                                    id="logstore-selective-enable-{{configname}}"
+                                    data-action="toggle-enabled"
+                                    data-configname="{{configname}}"
+                                    data-initial="{{#enabled}}1{{/enabled}}{{^enabled}}0{{/enabled}}"
+                                    {{#enabled}}checked{{/enabled}}>
+                                <label class="custom-control-label" for="logstore-selective-enable-{{configname}}">
+                                    <span class="sr-only">{{#str}}events:enablelabel, logstore_selective, {{name}}{{/str}}</span>
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="font-weight-bold">{{name}}</div>
+                            <small class="text-muted text-break"><code>{{eventname}}</code></small>
+                        </td>
+                        <td>{{componentname}}</td>
+                        <td><span class="badge badge-secondary">{{edulevelname}}</span></td>
+                        <td><span class="badge badge-info">{{crudname}}</span></td>
+                        <td><small>{{objecttable}}</small></td>
+                        <td>
+                            <label class="sr-only" for="logstore-selective-duration-{{configname}}">
+                                {{#str}}events:durationlabel, logstore_selective, {{name}}{{/str}}
+                            </label>
+                            <select class="custom-select custom-select-sm"
+                                id="logstore-selective-duration-{{configname}}"
+                                data-action="set-duration"
+                                data-configname="{{configname}}"
+                                data-initial="{{duration}}">
+                                {{#durations}}
+                                    <option value="{{value}}" {{#selected}}selected{{/selected}}>{{label}}</option>
+                                {{/durations}}
+                            </select>
+                        </td>
+                    </tr>
+                {{/events}}
+            </tbody>
+        </table>
+        <div class="alert alert-info d-none" data-region="empty">{{#str}}events:nomatch, logstore_selective{{/str}}</div>
+    </div>
+
+    <div class="logstore-selective-footer logstore-selective-gap d-flex align-items-center justify-content-end p-3 border-top bg-white" data-region="footer">
+        <span aria-live="polite" data-region="changes">{{#str}}events:changes, logstore_selective, 0{{/str}}</span>
+        <button type="button" class="btn btn-secondary" data-action="reset" disabled>
+            {{#str}}events:reset, logstore_selective{{/str}}
+        </button>
+        <button type="button" class="btn btn-primary" data-action="save" disabled>
+            {{#str}}savechanges{{/str}}
+        </button>
+    </div>
 </div>

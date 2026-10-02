@@ -23,31 +23,17 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use logstore_selective\table\events;
+use logstore_selective\output\events_page;
 
-require_once( dirname(__FILE__, 6) . '/config.php');
+require_once(dirname(__FILE__, 6) . '/config.php');
 require_once($CFG->dirroot . '/lib/adminlib.php');
 
 navigation_node::override_active_url(new moodle_url('/admin/settings.php', ['section' => 'logsettingselective']));
 admin_externalpage_setup('logstore_selective/events');
 
-$PAGE->requires->css('/admin/tool/log/store/selective/styles.css');
 $PAGE->requires->js_call_amd('logstore_selective/settings', 'init');
 
 echo $OUTPUT->header();
-
-// Get the events table.
-$table = new events();
-ob_start();
-$table->out();
-$eventtable = ob_get_clean();
-
-// Render the template.
-echo $OUTPUT->render_from_template(
-    'logstore_selective/events',
-    [
-        'table' => $eventtable,
-    ],
-);
-
+echo $OUTPUT->heading(get_string('events:heading', 'logstore_selective'));
+echo $OUTPUT->render_from_template('logstore_selective/events', (new events_page())->export_for_template($OUTPUT));
 echo $OUTPUT->footer();

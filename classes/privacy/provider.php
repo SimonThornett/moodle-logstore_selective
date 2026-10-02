@@ -14,19 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Data provider.
- *
- * @package   logstore_selective
- * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
- * @copyright Catalyst IT, 2025
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace logstore_selective\privacy;
-defined('MOODLE_INTERNAL') || die();
 
 use core_privacy\local\metadata\collection;
+use core_privacy\local\metadata\provider as metadata_provider;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\userlist;
 use tool_log\local\privacy\logstore_provider;
@@ -41,12 +32,7 @@ use tool_log\local\privacy\moodle_database_export_and_delete;
  * @copyright Catalyst IT, 2025
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-class provider implements
-    \core_privacy\local\metadata\provider,
-    logstore_provider,
-    logstore_userlist_provider {
-
+class provider implements logstore_provider, logstore_userlist_provider, metadata_provider {
     use moodle_database_export_and_delete;
 
     /**
@@ -120,7 +106,7 @@ class provider implements
         global $DB;
         return [
             $DB,
-            'logstore_selective_log'
+            'logstore_selective_log',
         ];
     }
 
@@ -132,7 +118,7 @@ class provider implements
     protected static function get_export_subcontext(): array {
         return [
             get_string('privacy:path:logs', 'tool_log'),
-            get_string('pluginname', 'logstore_selective')
+            get_string('pluginname', 'logstore_selective'),
         ];
     }
 }

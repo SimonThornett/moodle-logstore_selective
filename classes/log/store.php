@@ -14,15 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Standard log reader/writer.
- *
- * @package   logstore_selective
- * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
- * @copyright Catalyst IT, 2025
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 namespace logstore_selective\log;
 
 use core\dml\recordset_walk;
@@ -31,20 +22,31 @@ use core\log\sql_internal_table_reader;
 use stdClass;
 use tool_log\helper\buffered_writer;
 use tool_log\helper\reader;
+use tool_log\helper\store as store_helper;
 use tool_log\log\manager;
 use tool_log\log\writer;
 
-defined('MOODLE_INTERNAL') || die();
-
-class store implements writer, sql_internal_table_reader {
-
-    use \tool_log\helper\store,
-        buffered_writer,
-        reader;
+/**
+ * Selective log reader/writer.
+ *
+ * @package   logstore_selective
+ * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
+ * @copyright Catalyst IT, 2025
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class store implements sql_internal_table_reader, writer {
+    use store_helper;
+    use buffered_writer;
+    use reader;
 
     /** @var bool $logguests true if logging guest access */
     protected bool $logguests;
 
+    /**
+     * Constructor.
+     *
+     * @param manager $manager The log manager.
+     */
     public function __construct(manager $manager) {
         $this->helper_setup($manager);
         $this->logguests = (bool)$this->get_config('logguests', true);
@@ -60,17 +62,17 @@ class store implements writer, sql_internal_table_reader {
     protected function is_event_ignored(base $event): bool {
 
         // Check the config to see if we ignore it. If so early return, otherwise do login check.
-        $config = $this->get_config(self::get_processed_eventname($event->eventname));
+        $config = (bool)$this->get_config(self::get_processed_eventname($event->eventname) . "_enabled");
         if (is_null($config)) {
             return true;
         }
-        if ((!CLI_SCRIPT or PHPUNIT_TEST) and !$this->logguests) {
+        if ((!CLI_SCRIPT || PHPUNIT_TEST) && !$this->logguests) {
             // Always log inside CLI scripts because we do not login there.
-            if (!isloggedin() or isguestuser()) {
+            if (!isloggedin() || isguestuser()) {
                 return true;
             }
         }
-        return false;
+        return !$config;
     }
 
     /**
@@ -89,12 +91,22 @@ class store implements writer, sql_internal_table_reader {
         $DB->insert_records('logstore_selective_log', $evententries);
     }
 
+    /**
+     * Fetch records using given criteria.
+     *
+     * @param string $selectwhere
+     * @param array $params
+     * @param string $sort
+     * @param int $limitfrom
+     * @param int $limitnum
+     * @return base[]
+     */
     public function get_events_select($selectwhere, array $params, $sort, $limitfrom, $limitnum): array {
         global $DB;
 
         $sort = self::tweak_sort_by_id($sort);
 
-        $events = array();
+        $events = [];
         $records = $DB->get_recordset_select('logstore_selective_log', $selectwhere, $params, $sort, '*', $limitfrom, $limitnum);
 
         foreach ($records as $data) {
@@ -129,7 +141,7 @@ class store implements writer, sql_internal_table_reader {
 
         $recordset = $DB->get_recordset_select('logstore_selective_log', $selectwhere, $params, $sort, '*', $limitfrom, $limitnum);
 
-        return new recordset_walk($recordset, array($this, 'get_log_event'));
+        return new recordset_walk($recordset, [$this, 'get_log_event']);
     }
 
     /**
@@ -142,7 +154,6 @@ class store implements writer, sql_internal_table_reader {
 
         $extra = ['origin' => $data->origin, 'ip' => $data->ip, 'realuserid' => $data->realuserid];
         $data = (array)$data;
-        $id = $data['id'];
         $data['other'] = self::decode_other($data['other']);
         if ($data['other'] === false) {
             $data['other'] = [];
@@ -151,6 +162,7 @@ class store implements writer, sql_internal_table_reader {
         unset($data['ip']);
         unset($data['realuserid']);
         unset($data['id']);
+        unset($data['configname']);
 
         if (!$event = base::restore($data, $extra)) {
             return null;
@@ -185,6 +197,11 @@ class store implements writer, sql_internal_table_reader {
         return $DB->record_exists_select('logstore_selective_log', $selectwhere, $params);
     }
 
+    /**
+     * Returns the name of the table that stores the log events.
+     *
+     * @return string
+     */
     public function get_internal_log_table_name(): string {
         return 'logstore_selective_log';
     }
@@ -202,32 +219,14 @@ class store implements writer, sql_internal_table_reader {
      * Get the processed eventname to use in the config settings.
      * We remove the leading \ and replace all others with underscores.
      *
-     * @param $eventname
+     * @param string $eventname Fully qualified event class name.
      * @return string
      */
-    public static function get_processed_eventname($eventname): string {
+    public static function get_processed_eventname(string $eventname): string {
         return substr(
             str_replace('\\', '_', $eventname),
             1,
             strlen($eventname)
         );
     }
-
-    /**
-     * Api to get plugin config
-     *
-     * @param string $name name of the config.
-     * @param null|mixed $default default value to return.
-     *
-     * @return mixed|null return config value.
-     */
-    protected function get_config($name, $default = null): mixed {
-        $enabled = get_config($this->component, $name . '_enabled');
-        $duration = get_config($this->component, $name . '_duration');
-        if ($duration !== false && $enabled) {
-            return $duration;
-        }
-        return $default;
-    }
-
 }

@@ -14,23 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace logstore_selective\task;
+
+use core\task\scheduled_task;
+use logstore_selective\local\event_list;
+
 /**
- * Clean up task.
+ * Removes selective log records older than each event's retention period.
  *
  * @package   logstore_selective
  * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
  * @copyright Catalyst IT, 2025
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace logstore_selective\task;
-
-use core\task\scheduled_task;
-
-defined('MOODLE_INTERNAL') || die();
-
 class cleanup_task extends scheduled_task {
-
     /**
      * Get a descriptive name for this task (shown to admins).
      *
@@ -52,16 +49,16 @@ class cleanup_task extends scheduled_task {
 
         // Next iterate over each config item and remove matching events older than the defined period.
         foreach ($config as $eventname => $duration) {
-
             // Convert duration to days.
             $duration = time() - ($duration * DAYSECS);
             $selectparams = [$duration, $eventname];
             $start = time();
 
-            while ($min = $DB->get_field_select('logstore_selective_log', "MIN(timecreated)", "timecreated < ? AND configname = ?", $selectparams)) {
+            $select = 'timecreated < ? AND configname = ?';
+            while ($min = $DB->get_field_select('logstore_selective_log', 'MIN(timecreated)', $select, $selectparams)) {
                 // Delete a days worth at a time.
                 $params = [min($min + DAYSECS, $duration), $eventname];
-                $DB->delete_records_select('logstore_selective_log', "timecreated < ? AND configname = ?", $params);
+                $DB->delete_records_select('logstore_selective_log', $select, $params);
                 if (time() > $start + 600) {
                     // Do not churn on log deletion for too long each run.
                     break;
@@ -73,32 +70,11 @@ class cleanup_task extends scheduled_task {
     }
 
     /**
-     * Get the enabled config for the events.
+     * Get the enabled events that have a retention period.
      *
-     * @return array
+     * @return int[] Duration in days keyed by configname.
      */
     private function get_config(): array {
-        $config = get_config('logstore_selective');
-        $enabled = [];
-
-        foreach ($config as $name => $value) {
-            // We're only looking at enabled flag config.
-            if (!str_contains($name, '_enabled')) {
-                continue;
-            }
-            // Skip disabled events.
-            if (!$value) {
-                continue;
-            }
-
-            $eventname = str_replace('_enabled', '', $name);
-            $duration = get_config('logstore_selective', $eventname . '_duration');
-
-            // If 0 then "Never delete logs" selected so don't include.
-            if ($duration) {
-                $enabled[$eventname] = $duration;
-            }
-        }
-        return $enabled;
+        return array_filter(event_list::get_enabled_events());
     }
 }

@@ -22,11 +22,7 @@
  * @copyright Catalyst IT, 2025
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die();
-
 class backup_logstore_selective_subplugin extends backup_tool_log_logstore_subplugin {
-
     /**
      * Returns the subplugin structure to attach to the 'logstore' XML element.
      *
@@ -46,7 +42,7 @@ class backup_logstore_selective_subplugin extends backup_tool_log_logstore_subpl
             [
                 'eventname', 'component', 'action', 'target', 'objecttable',
                 'objectid', 'crud', 'edulevel', 'contextid', 'userid', 'relateduserid',
-                'anonymous', $otherelement, 'timecreated', 'ip', 'realuserid'
+                'anonymous', $otherelement, 'timecreated', 'ip', 'realuserid',
             ]
         );
 

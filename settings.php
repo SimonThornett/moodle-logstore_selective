@@ -23,8 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-use logstore_selective\log\store;
-use tool_monitor\eventlist;
+use logstore_selective\local\rebuild;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -80,4 +79,22 @@ if ($hassiteconfig) {
             ),
         ),
     );
+
+    // Maintenance settings.
+    $settings->add(
+        new admin_setting_heading(
+            'logstore_selective/maintenance',
+            get_string('setting:maintenance', 'logstore_selective'),
+            '',
+        ),
+    );
+
+    $rebuildsetting = new admin_setting_configcheckbox(
+        'logstore_selective/' . rebuild::SETTING,
+        new lang_string('setting:rebuildlog', 'logstore_selective'),
+        new lang_string('setting:rebuildlog_desc', 'logstore_selective'),
+        0,
+    );
+    $rebuildsetting->set_updatedcallback([rebuild::class, 'setting_updated']);
+    $settings->add($rebuildsetting);
 }

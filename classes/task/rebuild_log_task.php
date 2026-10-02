@@ -14,18 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace logstore_selective\task;
+
+use core\task\adhoc_task;
+use logstore_selective\local\rebuild;
+
 /**
- * Version file.
+ * Adhoc task that clears and refills the selective log from the standard log.
  *
  * @package   logstore_selective
  * @author    Simon Thornett <simon.thornett@catalyst-eu.net>
- * @copyright Catalyst IT, 2025
+ * @copyright Catalyst IT, 2026
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+class rebuild_log_task extends adhoc_task {
+    /**
+     * Get a descriptive name for this task.
+     *
+     * @return string
+     */
+    public function get_name(): string {
+        return get_string('taskrebuild', 'logstore_selective');
+    }
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version = 2026100200;
-$plugin->requires = 2024042205;
-$plugin->component = 'logstore_selective';
-$plugin->release = '1.3';
+    /**
+     * Run the rebuild.
+     */
+    public function execute(): void {
+        $total = rebuild::execute(function (string $message): void {
+            mtrace('  ' . $message);
+        });
+        mtrace(get_string('rebuild:complete', 'logstore_selective', $total));
+    }
+}
